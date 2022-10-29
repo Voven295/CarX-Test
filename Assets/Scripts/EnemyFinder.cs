@@ -6,7 +6,14 @@ namespace TowerDefence
 {
     public class EnemyFinder : MonoBehaviour
     {
-        public const float MaxDistance = 12f;
+        [SerializeField]
+        private float maxDistance = 12f;
+        public float MaxDistance
+        {
+            get { return maxDistance; }
+            private set { maxDistance = value; }
+        }
+        
         private Queue<Enemy> activeEnemies;
 
         public Enemy targetEnemy { get; private set; } = null;

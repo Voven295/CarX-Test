@@ -9,7 +9,7 @@ namespace TowerDefence
         private bool isInit = false;
         private bool isMoving;
 
-        public const float Speed = 5f;
+        public const float Speed = 6f;
 
         private float pathSegmentT;
         private int currentPathSegment;
