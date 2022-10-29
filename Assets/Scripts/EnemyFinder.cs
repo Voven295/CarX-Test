@@ -10,7 +10,7 @@ namespace TowerDefence
         private Queue<Enemy> activeEnemies;
 
         public Enemy targetEnemy { get; private set; } = null;
-        
+
         private void Awake()
         {
             activeEnemies = new Queue<Enemy>();
@@ -32,17 +32,25 @@ namespace TowerDefence
                 .FirstOrDefault(enemy => Vector3
                     .Distance(transform.position, enemy.transform.position) <= MaxDistance);
         }
-        
+
         private void Update()
         {
             if (activeEnemies.Count == 0) return;
 
-            targetEnemy = GetEnemyInRange(); 
-            
+            targetEnemy = GetEnemyInRange();
+
             if (targetEnemy != null)
             {
                 Debug.DrawLine(transform.position, targetEnemy.transform.position, Color.green);
             }
         }
+
+#if UNITY_EDITOR
+        private void OnDrawGizmos()
+        {
+            UnityEditor.Handles.DrawWireDisc(transform.position, Vector3.up, MaxDistance);
+
+        }
+#endif
     }
 }

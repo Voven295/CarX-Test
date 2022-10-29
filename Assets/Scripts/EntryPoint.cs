@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using Vector3 = System.Numerics.Vector3;
 
 namespace TowerDefence
 {
@@ -19,7 +18,7 @@ namespace TowerDefence
 
             for (int i = 0; i < waypointsRoot.childCount; i++)
             {
-                path[i] = Utils.FromUnityToNumerics(waypointsRoot.GetChild(i).position);
+                path[i] = waypointsRoot.GetChild(i).position;
             }
 
             poolManager.CreatePool<CannonProjectile>(shellPrefab, null, 10);
@@ -35,8 +34,7 @@ namespace TowerDefence
                 enemySpawnManager.OnEnemyDisable += enemyFinder.RemoveEnemy;
             }
 
-            enemySpawnManager.Init(poolManager, path);
-            enemySpawnManager.Spawn();
+            enemySpawnManager.Init(path);
         }
     }
 }

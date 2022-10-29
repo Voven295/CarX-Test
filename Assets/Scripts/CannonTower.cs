@@ -90,7 +90,7 @@ namespace TowerDefence
 		private void CalculateTrajectory()
 		{
 			//var offsetX = targetEnemy.transform.position.x - 0.7f * Enemy.Speed;
-			Vector3 targetPoint = GetGhostPosition(3);
+			Vector3 targetPoint = GetGhostPosition(2);
 			Vector2 direction;
 			
 			direction.x = targetPoint.x - launchPoint.x;
@@ -144,7 +144,10 @@ namespace TowerDefence
 		{
 			if (targetEnemy == null) return;
 
-			Gizmos.DrawSphere(GetGhostPosition(3), 0.5f);
+			Gizmos.color = Color.red;
+			Gizmos.DrawSphere(targetEnemy.transform.position, 0.5f);
+			Gizmos.color = Color.white;
+			Gizmos.DrawSphere(GetGhostPosition(2), 0.5f);
 			//Gizmos.color = Color.gray;
 			//Gizmos.DrawSphere(pos, 0.5f);
 		}

@@ -1,17 +1,19 @@
 ﻿using System;
 using UnityEngine;
-using Vector3 = System.Numerics.Vector3;
 
 namespace TowerDefence
 {
     public class Enemy : MonoBehaviour, IPooledObject
     {
         private Vector3[] path;
-        private EnemyMovement movement;
-        private int startIndex = 0;
         private bool isInit = false;
+        private bool isMoving;
 
-        public const float Speed = 1f;
+        public const float Speed = 5f;
+
+        private float pathSegmentT;
+        private int currentPathSegment;
+
         public bool IsReadyToReuse { get; private set; } = true;
         public event Action OnDisabled;
 
@@ -19,37 +21,47 @@ namespace TowerDefence
         {
             OnDisabled?.Invoke();
         }
-        
+
         public void Init(Vector3[] path)
         {
-            this.path = path;
-            movement = new EnemyMovement(path[0], Speed);
-            transform.position = Utils.FromNumericsToUnity(movement.startPosition);
-            movement.StartMoving();
             isInit = true;
+            this.path = path;
+            StartMoving();
         }
-        
+
+        private void StartMoving()
+        {
+            currentPathSegment = 0;
+            pathSegmentT = 0;
+            transform.position = path[0];
+            isMoving = true;
+            IsReadyToReuse = false;
+        }
+
         private void Update()
         {
-            if (!(isInit && movement.isMoving)) return;
+            if (!(isInit && isMoving)) return;
 
-            if (movement.MoveByPath(path, Time.deltaTime, ref startIndex))
+            var segmentsDist = Vector3.Distance(path[currentPathSegment + 1], path[currentPathSegment]);
+
+            pathSegmentT += Time.deltaTime * Speed / segmentsDist;
+            transform.position = Vector3.Lerp(path[currentPathSegment], path[currentPathSegment + 1], pathSegmentT);
+
+            if (pathSegmentT >= 1)
             {
-                transform.position = Utils.FromNumericsToUnity(movement.currentPosition);
-                IsReadyToReuse = false;
-            }
-            else
-            {
-                IsReadyToReuse = true;
-                startIndex = 0;
-                gameObject.SetActive(false);
+                pathSegmentT -= 1f;
+                currentPathSegment++;
+                if (path.Length == currentPathSegment)
+                {
+                    // NOTE(sqdrck): Reached.
+                    isMoving = false;
+                    IsReadyToReuse = true;
+                }
             }
         }
 
         public void ObjectReuse()
         {
-            movement.StartMoving();
         }
-
     }
 }
