@@ -4,12 +4,9 @@ namespace TowerDefence
 {
     public class EntryPoint : MonoBehaviour
     {
-        [SerializeField] private PoolManager poolManager;
-        [SerializeField] private GameObject shellPrefab;
-        [SerializeField] private EnemySpawnManager enemySpawnManager;
+        [SerializeField] private EnemySpawner enemySpawner;
         [SerializeField] private Transform towersRoot;
         [SerializeField] private Transform waypointsRoot;
-        [SerializeField] private Transform projectilesRoot;
 
         private Vector3[] path;
         private void Awake()
@@ -20,21 +17,7 @@ namespace TowerDefence
             {
                 path[i] = waypointsRoot.GetChild(i).position;
             }
-
-            poolManager.CreatePool<CannonProjectile>(shellPrefab, null, 10);
-            foreach (Transform tower in towersRoot)
-            {
-                var currentTower = tower.GetComponent<ITower>();
-                currentTower?.Init(poolManager);
-
-                var enemyFinder = tower.GetComponentInChildren<EnemyFinder>();
-                
-                //BUG: GC spikes
-                enemySpawnManager.OnEnemySpawn += enemyFinder.AddEnemy;
-                enemySpawnManager.OnEnemyDisable += enemyFinder.RemoveEnemy;
-            }
-
-            enemySpawnManager.Init(path);
+            enemySpawner.Init(path);
         }
     }
 }

@@ -1,43 +1,42 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace TowerDefence
 {
-    public class Enemy : MonoBehaviour, IPooledObject
+    public class Enemy : MonoBehaviour
     {
+        //TODO (Voven): Create HP Display
         public struct PathPosition
         {
             public Vector3[] path;
             public Vector3 currentPosition;
+            public Vector3 targetPosition;
             public int currentSegment;
             public float currentT;
             public bool completed;
         }
-
-        public PathPosition Pp => pp;
+    
+        [SerializeField] private int maxHp = 100;
+        
+        private int hp;
         private bool isInit = false;
         private bool isMoving;
-
+        public PathPosition Pp => pp;
         public const float Speed = 10f;
+        public int Hp => hp;
 
         PathPosition pp;
-
-        public bool IsReadyToReuse { get; private set; } = true;
-        public event Action OnDisabled;
-
-        private void OnDisable()
-        {
-            OnDisabled?.Invoke();
-        }
-
+        
         public void Init(Vector3[] path)
         {
+            hp = maxHp;
             isInit = true;
-            pp = new PathPosition();
-            pp.path = path;
+            pp = new PathPosition
+            {
+                path = path
+            };
             StartMoving();
         }
-
+        
         private void StartMoving()
         {
             pp.currentSegment = 0;
@@ -46,7 +45,6 @@ namespace TowerDefence
             pp.currentPosition = pp.path[0];
             transform.position = pp.path[0];
             isMoving = true;
-            IsReadyToReuse = false;
         }
 
 
@@ -69,11 +67,19 @@ namespace TowerDefence
             }
             else
             {
-                pp.currentPosition = Vector3.Lerp(pp.path[pp.currentSegment], pp.path[pp.currentSegment + 1], pp.currentT);
+                pp.targetPosition = pp.path[pp.currentSegment + 1];
+                pp.currentPosition = Vector3.Lerp(pp.path[pp.currentSegment], pp.targetPosition, pp.currentT);
             }
             return pp;
         }
 
+        public void TakeDamage(int damage)
+        {
+            hp -= damage;
+            //NOTE (Voven): GC spikes 
+            if (hp <= 0) Destroy(gameObject);
+        }
+        
         private void Update()
         {
             if (!(isInit && isMoving)) return;
@@ -81,21 +87,16 @@ namespace TowerDefence
             var newPp = GetFuturePosition(pp, Time.deltaTime * Speed);
             pp = newPp;
             transform.position = pp.currentPosition;
+            transform.LookAt(pp.targetPosition);
+            
             if (pp.completed)
             {
-                // NOTE(sqdrck): Reached.
+                //Reached.
                 isMoving = false;
-                IsReadyToReuse = true;
+                
+                //NOTE (Voven): GC spikes 
+                Destroy(gameObject);
             }
-        }
-
-        private void OnDrawGizmos()
-        {
-            Gizmos.DrawSphere(pp.path[pp.currentSegment], 0.2f);
-        }
-
-        public void ObjectReuse()
-        {
         }
     }
 }

@@ -1,8 +1,9 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 
 namespace TowerDefence
 {
-    public class CannonTower : MonoBehaviour, ITower
+    public class CannonTower : MonoBehaviour
     {
         [SerializeField] private GameObject shellPrefab;
         [SerializeField] private Transform cannon;
@@ -10,64 +11,45 @@ namespace TowerDefence
         [SerializeField] private Transform origin;
         [SerializeField] private float speedRotation = 4f;
         [SerializeField] private float shootPerSeconds = 1.25f;
-
-        [SerializeField] private EnemyFinder enemyFinder;
-
-        private PoolManager poolManager;
-
-        private Vector3 shellVelocity;
-        private Enemy targetEnemy;
+        [SerializeField] private float maxCanonRotationX = 15f;
+        [SerializeField] private float reloadDuration = 1f;
+    
+        private EnemyFinder enemyFinder;
+        [SerializeField] private Enemy targetEnemy;
 
         private Quaternion cannonBaseStartRotation;
         private Quaternion cannonStartRotation;
 
-        private Vector3 launchPoint;
         private Vector3 launchVelocity;
-
-        [SerializeField] private float reloadDuration = 1f;
+        
         private float reloadT;
         private float bulletSpeed;
-        private float travelTime = 0.5f;
+        private const float TravelTime = 0.5f;
 
         private Vector3 direction;
         private Vector3 currentTargetPoint;
-
-        public void Init(PoolManager poolManager)
-        {
-            this.poolManager = poolManager;
-        }
-
+        
         private void Awake()
         {
+            enemyFinder = GetComponentInChildren<EnemyFinder>();
             cannonBaseStartRotation = cannonBase.transform.rotation;
             cannonStartRotation = cannon.transform.rotation;
-            launchPoint = cannon.position;
-            OnValidate();
-        }
-
-        void OnValidate()
-        {
-            float x = enemyFinder.MaxDistance + 0.25f;
-            float y = -cannon.position.y;
         }
 
         private void Update()
         {
-            targetEnemy = enemyFinder.targetEnemy;
+            targetEnemy = enemyFinder.TargetEnemy;
 
             if (targetEnemy != null)
             {
-                if (CalculateTrajectory())
-                {
-                    reloadT += Time.deltaTime * shootPerSeconds;
+                if (!CalculateTrajectory()) return;
+                
+                reloadT += Time.deltaTime * shootPerSeconds;
 
-                    if (reloadT >= reloadDuration)
-                    {
-                        Shoot();
-                        reloadT -= reloadDuration;
-            
-                    }
-                }
+                if (!(reloadT >= reloadDuration)) return;
+                
+                Shoot();
+                reloadT -= reloadDuration;
             }
             else
             {
@@ -86,11 +68,21 @@ namespace TowerDefence
 
         public void Shoot()
         {
-            CalculateTrajectory();
-            var shell = poolManager.ReuseObject(shellPrefab, origin.transform.position, Quaternion.identity);
-            shell.gameObject.GetComponent<CannonProjectile>().Init(launchPoint, launchVelocity);
+            var shellGo = Instantiate(shellPrefab, origin.transform.position, Quaternion.identity);
+            var shell = shellGo.GetComponent<CannonProjectile>();
+            shell.Init(launchVelocity);
+            
+            Destroy(shellGo, TravelTime);
+            StartCoroutine(DealDamage());
         }
 
+        private IEnumerator DealDamage()
+        {
+            yield return new WaitForSeconds(TravelTime);
+            if (targetEnemy == null) yield break;
+            targetEnemy.TakeDamage(CannonProjectile.Damage);
+        }
+        
         private bool GetGhostPosition(float seconds, out Vector3 result)
         {
             result = targetEnemy.GetFuturePosition(targetEnemy.Pp, seconds * Enemy.Speed).currentPosition;
@@ -99,11 +91,23 @@ namespace TowerDefence
 
         private bool CalculateTrajectory()
         {
-            if (!GetGhostPosition(travelTime, out currentTargetPoint)) return false;
-
+            if (!GetGhostPosition(TravelTime, out currentTargetPoint)) return false;
+            
             var dist = Vector3.Distance(origin.position, currentTargetPoint);
-            bulletSpeed = dist / travelTime;
+            
+            bulletSpeed = dist / TravelTime;
             direction = (currentTargetPoint - origin.position).normalized;
+            
+            Quaternion lookRotation = Quaternion.LookRotation(direction);
+
+            var lookRotationX = Mathf.Clamp(lookRotation.eulerAngles.x, 0, maxCanonRotationX);
+            
+            Quaternion canonBaseTargetRot = Quaternion.Euler(cannonBase.transform.rotation.eulerAngles.x,
+                lookRotation.eulerAngles.y, cannonBase.transform.rotation.eulerAngles.z);
+            Quaternion canonTargetRot = Quaternion.Euler(lookRotationX, cannon.transform.rotation.eulerAngles.y,
+                cannon.transform.rotation.eulerAngles.z);
+
+            Rotate(canonBaseTargetRot, canonTargetRot);
 
             launchVelocity = direction * bulletSpeed;
 

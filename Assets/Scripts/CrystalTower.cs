@@ -4,6 +4,7 @@ namespace TowerDefence
 {
 	public class CrystalTower : MonoBehaviour
 	{
+		//TODO (Voven): Create logic CrystalTower 
 		[SerializeField] private float shootInterval = 0.5f; 
 		
 		/*public float m_shootInterval = 0.5f;
