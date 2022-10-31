@@ -4,9 +4,50 @@ namespace TowerDefence
 {
 	public class CrystalTower : MonoBehaviour
 	{
-		//TODO (Voven): Create logic CrystalTower 
-		[SerializeField] private float shootInterval = 0.5f; 
+		[SerializeField] private float shootPerSeconds = 1.25f;
+		[SerializeField] private float reloadDuration = 1f;
+		[SerializeField] private GameObject guidedProjectile;
+		[SerializeField] private Transform crystal;
 		
+		private EnemyFinder enemyFinder;
+		private Enemy targetEnemy;
+
+		private Vector3 launchVelocity;
+		private Vector3 direction;
+		private Vector3 currentTargetPoint;
+		
+		private float reloadT;
+		private float bulletSpeed;
+
+		//private float maxDistance => enemyFinder.MaxDistance;
+
+		private void Awake()
+		{
+			enemyFinder = GetComponentInChildren<EnemyFinder>();
+		}
+		
+		private void Update()
+		{
+			targetEnemy = enemyFinder.TargetEnemy;
+
+			if (targetEnemy != null)
+			{
+				reloadT += Time.deltaTime * shootPerSeconds;
+
+				if (!(reloadT >= reloadDuration)) return;
+                
+				Shoot();
+				reloadT -= reloadDuration;
+			}
+			
+		}
+		
+		public void Shoot()
+		{
+			var projectile = Instantiate(guidedProjectile, crystal.transform.position, Quaternion.identity)
+				.GetComponent<GuidedProjectile>();
+			projectile.Init(targetEnemy.transform);
+		}
 		/*public float m_shootInterval = 0.5f;
 		public float m_range = 4f;
 		public GameObject m_projectilePrefab;
@@ -34,10 +75,7 @@ namespace TowerDefence
 	
 		}*/
 
-		public void Shoot()
-		{
-			
-		}
+		
 	}	
 }
 

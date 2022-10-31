@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace TowerDefence
 {
-    public class CannonTower : MonoBehaviour
+    public class CanonTower : MonoBehaviour
     {
         [SerializeField] private GameObject shellPrefab;
         [SerializeField] private Transform cannon;
@@ -15,7 +15,7 @@ namespace TowerDefence
         [SerializeField] private float reloadDuration = 1f;
     
         private EnemyFinder enemyFinder;
-        [SerializeField] private Enemy targetEnemy;
+        private Enemy targetEnemy;
 
         private Quaternion cannonBaseStartRotation;
         private Quaternion cannonStartRotation;
@@ -24,10 +24,11 @@ namespace TowerDefence
         
         private float reloadT;
         private float bulletSpeed;
-        private const float TravelTime = 0.5f;
 
         private Vector3 direction;
         private Vector3 currentTargetPoint;
+        
+        public const float TravelTime = 0.5f;
         
         private void Awake()
         {
@@ -53,7 +54,6 @@ namespace TowerDefence
             }
             else
             {
-                reloadT = 0;
                 Rotate(cannonBaseStartRotation, cannonStartRotation);
             }
         }
@@ -102,13 +102,13 @@ namespace TowerDefence
 
             var lookRotationX = Mathf.Clamp(lookRotation.eulerAngles.x, 0, maxCanonRotationX);
             
-            Quaternion canonBaseTargetRot = Quaternion.Euler(cannonBase.transform.rotation.eulerAngles.x,
-                lookRotation.eulerAngles.y, cannonBase.transform.rotation.eulerAngles.z);
-            Quaternion canonTargetRot = Quaternion.Euler(lookRotationX, cannon.transform.rotation.eulerAngles.y,
-                cannon.transform.rotation.eulerAngles.z);
+            Quaternion canonBaseTargetRot = Quaternion.Euler(cannonBase.transform.rotation.eulerAngles.x, lookRotation.eulerAngles.y,
+                cannonBase.transform.rotation.eulerAngles.z);;
+            Quaternion canonTargetRot = Quaternion.Euler(lookRotationX, 
+                cannonBase.transform.rotation.eulerAngles.y, cannonBase.transform.rotation.eulerAngles.z);
 
             Rotate(canonBaseTargetRot, canonTargetRot);
-
+            
             launchVelocity = direction * bulletSpeed;
 
             return true;

@@ -1,27 +1,48 @@
 ﻿using UnityEngine;
-using TowerDefence;
 
-public class GuidedProjectile : MonoBehaviour {
-	public GameObject m_target;
-	public float m_speed = 0.2f;
-	public int m_damage = 10;
+namespace TowerDefence
+{
+	public class GuidedProjectile : MonoBehaviour 
+	{
+		[SerializeField] private float speed = 2f;
+		[SerializeField] private float minDistance = 0.01f;
+		
+		private Transform target;
+		private bool isInit = false;
+		public const int Damage = 10;
 
-	void Update () {
-		if (m_target == null) {
-			Destroy (gameObject);
-			return;
+		public void Init(Transform target)
+		{
+			this.target = target;
+			isInit = true;
+		}
+	
+		void Update () {
+		
+			if (!isInit) return;
+			
+			Move();
+
+			if (Vector3.Distance(transform.position, target.position) <= minDistance)
+			{
+				target.gameObject.GetComponent<Enemy>().TakeDamage(Damage);
+				Destroy(gameObject);
+			}
+			
+			if (transform == null) 
+			{
+				Destroy (gameObject);
+			}
 		}
 
-		var translation = m_target.transform.position - transform.position;
-		if (translation.magnitude > m_speed) {
-			translation = translation.normalized * m_speed;
+		private void Move()
+		{
+			var translation = target.transform.position - transform.position;
+			if (translation.magnitude > speed) 
+			{
+				translation = translation.normalized * speed;
+			}
+			transform.Translate (translation);
 		}
-		transform.Translate (translation);
-	}
-
-	void OnTriggerEnter(Collider other) {
-		var monster = other.gameObject.GetComponent<Enemy> ();
-		if (monster == null)
-			return;
 	}
 }

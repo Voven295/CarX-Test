@@ -6,19 +6,47 @@ namespace TowerDefence
     {
         [SerializeField]
         private float maxDistance = 12f;
+
+        private Enemy[] enemies;
+        private bool isInit = false;
         public float MaxDistance => maxDistance;
 
-        public Enemy TargetEnemy { get; private set; } = null;
+        public Enemy TargetEnemy;
 
-        private void OnTriggerEnter(Collider other)
+        public void Init(Enemy[] enemies)
         {
-            if (TargetEnemy == null)
-                TargetEnemy = other.GetComponent<Enemy>();
+            this.enemies = enemies;
+            isInit = true;
         }
-
-        private void OnTriggerExit(Collider other)
+        
+        private Vector3 GetEnemyFuturePosition(Enemy enemy)
         {
-            TargetEnemy = null;
+            return enemy.GetFuturePosition(enemy.Pp, CanonTower.TravelTime * Enemy.Speed).currentPosition;
+        }
+        private Enemy EnemyInRange()
+        {
+            if (!isInit) return null;
+            
+            foreach (var enemy in enemies)
+            {
+                if (Vector3.Distance(transform.position, GetEnemyFuturePosition(enemy))
+                    <= maxDistance && enemy.IsActive)
+                {
+                    return enemy;
+                }
+            }
+
+            return null;
+        }
+        
+        private void Update()
+        {
+            if (TargetEnemy == null) TargetEnemy = EnemyInRange();
+            else if (Vector3.Distance(transform.position, GetEnemyFuturePosition(TargetEnemy)) > maxDistance || 
+                     !TargetEnemy.IsActive)
+            {
+                TargetEnemy = null;
+            }
         }
 
 #if UNITY_EDITOR

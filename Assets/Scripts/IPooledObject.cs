@@ -1,10 +1,8 @@
-﻿using System;
-
-namespace TowerDefence
+﻿namespace TowerDefence
 {
     public interface IPooledObject
     {
         void ObjectReuse();
-        bool IsReadyToReuse { get; }
+        bool IsActive { get; }
     }
 }

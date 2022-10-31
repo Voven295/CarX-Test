@@ -1,44 +1,59 @@
 ﻿using System;
-using TowerDefence;
 using UnityEngine;
 
-public class EnemySpawner : MonoBehaviour
+namespace TowerDefence
 {
-    [SerializeField, Range(0, 10)] private float delayToSpawnInSec = 1f;
-    [SerializeField] private GameObject enemyPrefab;
-
-    private float passedTime = 0f;
-    private bool isInit = false;
-    private Vector3[] enemyPath;
-    public event Action<Enemy> OnEnemySpawn;
-    
-    public void Init(Vector3[] path)
+    public class EnemySpawner : MonoBehaviour
     {
-        enemyPath = path;
-        isInit = true;
-    }
+        [SerializeField, Range(0, 10)] private float delayToSpawnInSec = 1f;
+        [SerializeField, Range(1, 20)] private int enemiesCount = 10;
+        [SerializeField] private GameObject enemyPrefab;
 
-    private void Update()
-    {
-        if (!isInit) return;
+        private float passedTime = 0f;
+        private bool isInit = false;
+        private PoolManager poolManager;
+        private Enemy[] createdEnemies;
+        public event Action<Enemy[]> OnEnemiesCreated;
         
-        if (passedTime <= delayToSpawnInSec)
+        public void Init(Vector3[] path, PoolManager poolManager)
         {
-            passedTime += Time.deltaTime;
-        }
-        else
-        {
-            Spawn(enemyPath);
-            passedTime -= delayToSpawnInSec;
-        }
-    }
+            this.poolManager = poolManager;
+            createdEnemies = poolManager.CreatePool<Enemy>(enemyPrefab, transform, enemiesCount);
 
-    public void Spawn(Vector3[] path)
-    {
-        var enemyGo = Instantiate(enemyPrefab);
-        var enemy = enemyGo.GetComponent<Enemy>();
-        enemy.Init(path);
+            foreach (var enemy in createdEnemies)
+            {
+                enemy.Init(path);
+            }
         
-        OnEnemySpawn?.Invoke(enemy);
+            OnEnemiesCreated?.Invoke(createdEnemies);
+            isInit = true;
+        }
+
+        private void Update()
+        {
+            if (!isInit) return;
+        
+            if (passedTime <= delayToSpawnInSec)
+            {
+                passedTime += Time.deltaTime;
+            }
+            else
+            {
+                Spawn();
+                passedTime -= delayToSpawnInSec;
+            }
+        }
+
+        public void Spawn()
+        {
+            if (!isInit) return;
+            
+            foreach (var enemy in createdEnemies)
+            {
+                if (enemy.IsActive) continue;
+                poolManager.ReuseObject(enemyPrefab);
+                return;
+            }
+        }
     }
 }

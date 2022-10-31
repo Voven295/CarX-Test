@@ -2,12 +2,12 @@
 
 namespace TowerDefence
 {
-    public class Enemy : MonoBehaviour
+    public class Enemy : MonoBehaviour, IPooledObject
     {
-        //TODO (Voven): Create HP Display
         public struct PathPosition
         {
             public Vector3[] path;
+            public Vector3 startPosition;
             public Vector3 currentPosition;
             public Vector3 targetPosition;
             public int currentSegment;
@@ -20,11 +20,11 @@ namespace TowerDefence
         private int hp;
         private bool isInit = false;
         private bool isMoving;
+        
         public PathPosition Pp => pp;
+        public bool IsActive => gameObject.activeInHierarchy;
         public const float Speed = 10f;
-        public int Hp => hp;
-
-        PathPosition pp;
+        private PathPosition pp;
         
         public void Init(Vector3[] path)
         {
@@ -34,6 +34,7 @@ namespace TowerDefence
             {
                 path = path
             };
+            pp.startPosition = pp.path[0];
             StartMoving();
         }
         
@@ -42,8 +43,8 @@ namespace TowerDefence
             pp.currentSegment = 0;
             pp.currentT = 0;
             pp.completed = false;
-            pp.currentPosition = pp.path[0];
-            transform.position = pp.path[0];
+            pp.currentPosition = pp.startPosition;
+            transform.position = pp.startPosition;
             isMoving = true;
         }
 
@@ -76,8 +77,18 @@ namespace TowerDefence
         public void TakeDamage(int damage)
         {
             hp -= damage;
-            //NOTE (Voven): GC spikes 
-            if (hp <= 0) Destroy(gameObject);
+            
+            if (hp <= 0)
+            {
+                isMoving = false;
+                gameObject.SetActive(false);
+            }
+        }
+        
+        public void ObjectReuse()
+        {
+            StartMoving();
+            hp = maxHp;
         }
         
         private void Update()
@@ -93,9 +104,7 @@ namespace TowerDefence
             {
                 //Reached.
                 isMoving = false;
-                
-                //NOTE (Voven): GC spikes 
-                Destroy(gameObject);
+                gameObject.SetActive(false);
             }
         }
     }

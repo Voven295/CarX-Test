@@ -7,17 +7,23 @@ namespace TowerDefence
         [SerializeField] private EnemySpawner enemySpawner;
         [SerializeField] private Transform towersRoot;
         [SerializeField] private Transform waypointsRoot;
+        [SerializeField] private PoolManager poolManager;
 
         private Vector3[] path;
+
         private void Awake()
         {
             path = new Vector3[waypointsRoot.childCount];
 
-            for (int i = 0; i < waypointsRoot.childCount; i++)
+            for (var i = 0; i < waypointsRoot.childCount; i++) path[i] = waypointsRoot.GetChild(i).position;
+
+            foreach (Transform towerTransform in towersRoot)
             {
-                path[i] = waypointsRoot.GetChild(i).position;
+                var enemyFinder = towerTransform.GetComponentInChildren<EnemyFinder>();
+                enemySpawner.OnEnemiesCreated += enemyFinder.Init;
             }
-            enemySpawner.Init(path);
+            
+            enemySpawner.Init(path, poolManager);
         }
     }
 }
